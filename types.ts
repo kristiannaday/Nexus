@@ -1,5 +1,5 @@
 
-export type Subject = 'Psychology' | 'Accounting' | 'General' | 'Professional' | string;
+export type Subject = 'Psychology' | 'Accounting' | 'Engineering' | 'Medical' | 'Legal' | 'Creative' | 'Tech' | 'Business' | 'Scientific' | 'Marketing' | 'General' | 'Professional' | string;
 export type ThemeMode = 'pink' | 'rose' | 'orange' | 'yellow' | 'green' | 'blue' | 'indigo' | 'purple' | 'default';
 export type UserRole = 'student' | 'worker';
 
@@ -9,10 +9,16 @@ export interface SourceDocument {
   content: string;
 }
 
+// Added KnowledgeStore interface to fix missing export error in KnowledgeVault.tsx
+export interface KnowledgeStore {
+  psychology: { lectures: string; readings: string; textbook: string };
+  accounting: { concepts: string; rules: string; practice: string };
+}
+
 export interface ModuleVisibility {
   accounting: boolean;
   psychology: boolean;
-  personal: boolean; // Group toggle
+  personal: boolean; 
   budget: boolean;
   fitness: boolean;
   nutrition: boolean;
@@ -26,6 +32,15 @@ export interface ModuleVisibility {
   visionAide: boolean;
   hearingAide: boolean;
   cognitiveAide: boolean;
+  healthHQ: boolean;
+  legalHQ: boolean;
+  creativeHQ: boolean;
+  techHQ: boolean;
+  engineeringHQ: boolean;
+  businessHQ: boolean;
+  scientificHQ: boolean;
+  psychologyHQ: boolean;
+  marketingHQ: boolean;
   dyslexiaMode: boolean;
   colorFilters: boolean;
   screenReaderOpt: boolean;
@@ -102,19 +117,4 @@ export interface GradingResult {
   score: string;
   feedback: string;
   criteriaMet: string[];
-}
-
-export interface KnowledgeStore {
-  psychology: {
-    lectures: string;
-    readings: string;
-    textbook: string;
-    [key: string]: string;
-  };
-  accounting: {
-    concepts: string;
-    rules: string;
-    practice: string;
-    [key: string]: string;
-  };
 }

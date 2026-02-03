@@ -19,167 +19,72 @@ const ActionCard: React.FC<{ title: string; desc: string; icon: string; color: s
   </button>
 );
 
-const UpcomingBanner: React.FC<{ events: CalendarEvent[], color: string }> = ({ events, color }) => {
-  if (events.length === 0) return null;
-  
-  return (
-    <div className={`mb-10 p-4 rounded-[2rem] bg-white border border-gray-100 shadow-sm overflow-hidden relative animate-in fade-in slide-in-from-top-4 duration-700`}>
-      <div className={`absolute left-0 top-0 bottom-0 w-2 bg-${color}`}></div>
-      <div className="flex items-center justify-between px-4">
-        <div className="flex items-center space-x-4">
-          <div className={`w-10 h-10 rounded-full bg-${color}/10 flex items-center justify-center text-${color}`}>
-            <i className="fa-solid fa-bell animate-bounce"></i>
-          </div>
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-40 block">Upcoming Today</span>
-            <div className="flex items-center space-x-6 overflow-x-auto no-scrollbar py-1">
-              {events.map(event => (
-                <div key={event.id} className="flex items-center space-x-2 whitespace-nowrap">
-                  <span className="font-black text-sm">{event.time}</span>
-                  <span className="font-bold text-sm opacity-70">{event.title}</span>
-                  <span className={`text-[8px] px-2 py-0.5 rounded-full bg-gray-100 font-black uppercase text-gray-500`}>{event.type}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <button className="text-xs font-black opacity-30 hover:opacity-100 transition-opacity">DISMISS</button>
-      </div>
-    </div>
-  );
-};
-
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const themeCtx = useContext(ThemeContext);
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [sectionOrder, setSectionOrder] = useState<string[]>(['professional', 'academic', 'personal']);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [sectionOrder, setSectionOrder] = useState<string[]>(['professional', 'academic', 'personal', 'accessibility']);
   
   const [visibility, setVisibility] = useState<ModuleVisibility>({
-    accounting: true,
-    psychology: true,
-    personal: true,
-    budget: true,
-    fitness: true,
-    nutrition: true,
-    calendar: true,
-    utilities: true,
-    emailEditor: false, 
-    docDrafter: false,  
-    studentMode: true,
-    careerMode: true,
-    taMode: false,
-    visionAide: true,   
-    hearingAide: false, 
-    cognitiveAide: false, 
-    dyslexiaMode: false,
-    colorFilters: false,
-    screenReaderOpt: false,
+    accounting: true, psychology: true, personal: true, budget: true, fitness: true,
+    nutrition: true, calendar: true, utilities: true, emailEditor: false, docDrafter: false,
+    studentMode: true, careerMode: true, taMode: false, visionAide: true, hearingAide: false,
+    cognitiveAide: false, healthHQ: false, legalHQ: false, creativeHQ: false, techHQ: false, 
+    engineeringHQ: true,
+    businessHQ: false,
+    scientificHQ: false, psychologyHQ: false, marketingHQ: false,
+    dyslexiaMode: false, colorFilters: false, screenReaderOpt: false,
   });
-
-  const [upcomingEvents] = useState<CalendarEvent[]>([
-    { id: '1', time: '11:30 AM', title: 'Psych 349 TA Office Hours', type: 'Work', description: '' },
-    { id: '2', time: '02:00 PM', title: 'Audit Lecture', type: 'Study', description: '' }
-  ]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('psych_assistant_user');
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
       setUser(parsedUser);
-      if (parsedUser.moduleVisibility) {
-        setVisibility({ ...visibility, ...parsedUser.moduleVisibility });
-      }
-      if (parsedUser.dashboardOrder) {
-        setSectionOrder(parsedUser.dashboardOrder);
-      }
+      if (parsedUser.moduleVisibility) setVisibility({ ...visibility, ...parsedUser.moduleVisibility });
+      if (parsedUser.dashboardOrder) setSectionOrder(parsedUser.dashboardOrder);
     }
   }, []);
 
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
-
-    const newOrder = [...sectionOrder];
-    const item = newOrder.splice(draggedIndex, 1)[0];
-    newOrder.splice(index, 0, item);
-    
-    setSectionOrder(newOrder);
-    setDraggedIndex(index);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-    if (user) {
-      const updatedUser = { ...user, dashboardOrder: sectionOrder };
-      setUser(updatedUser);
-      localStorage.setItem('psych_assistant_user', JSON.stringify(updatedUser));
-    }
-  };
-
   if (!themeCtx) return null;
-  const { theme, colors } = themeCtx;
+  const { colors, theme } = themeCtx;
 
-  const baseColor = colors.primary.split('-')[0];
-  const primaryCard = `bg-${baseColor}-600`;
-  const secondaryCard = `bg-${baseColor}-500`;
-  const tertiaryCard = `bg-${baseColor}-400`;
-  const accentCard = theme === 'default' ? "bg-blue-600" : `bg-${baseColor}-600`;
+  const profColor = theme === 'default' ? 'bg-indigo-600' : colors.cardPrimary;
+  const acadColor = theme === 'default' ? 'bg-emerald-500' : colors.cardSecondary;
+  const persColor = theme === 'default' ? 'bg-rose-500' : colors.cardQuaternary;
+  const aideColor = theme === 'default' ? 'bg-purple-600' : colors.cardTertiary;
+  
+  const hasAccounting = user?.selectedMajors?.includes('Accounting') || user?.selectedCareers?.includes('Accountant') || user?.selectedMajors.includes('Finance');
+  const hasEngineering = visibility.engineeringHQ && (user?.selectedMajors.some(m => ['Engineering', 'Architecture', 'Physics'].some(k => m.includes(k))) || user?.selectedCareers.some(c => c.includes('Engineer')));
+  const hasHealth = user?.selectedCareers.includes('Healthcare Professional') || user?.selectedMajors.some(m => ['Healthcare', 'Biology'].includes(m));
+  const hasLegal = user?.selectedCareers.includes('Lawyer') || user?.selectedMajors.includes('Law');
+  const hasCreative = user?.selectedCareers.includes('Designer') || user?.selectedMajors.some(m => ['Arts', 'Creative'].includes(m));
+  const hasTech = user?.selectedCareers.includes('Software Developer') || user?.selectedMajors.includes('Computer Science');
+  const hasBusiness = user?.selectedCareers.includes('Business Analyst') || user?.selectedMajors.includes('Business');
+  const hasScientific = user?.selectedMajors.includes('STEM') || user?.selectedMajors.includes('Physics') || user?.selectedMajors.includes('Biology');
+  const hasPsychologyPro = user?.selectedMajors.includes('Psychology') || user?.selectedCareers.includes('Researcher');
+  const hasMarketing = user?.selectedMajors.includes('Marketing') || user?.selectedCareers.includes('Designer');
 
-  const taButtonTitle = `${user?.customTASubject || 'Psychology'} Assistant`;
-  const hasAccounting = user?.selectedMajors?.includes('Accounting') || user?.selectedCareers?.includes('Accountant');
-
-  const renderSection = (id: string, index: number) => {
-    const isDragging = draggedIndex === index;
-    const commonSectionProps = {
-      draggable: true,
-      onDragStart: (e: React.DragEvent) => handleDragStart(e, index),
-      onDragOver: (e: React.DragEvent) => handleDragOver(e, index),
-      onDragEnd: handleDragEnd,
-      className: `group relative transition-all duration-300 ${isDragging ? 'opacity-30 scale-95' : 'opacity-100'}`
-    };
-
-    const dragHandle = (
-      <div className="absolute -left-8 top-1 hidden md:flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-20 hover:opacity-100 transition-opacity">
-        <i className="fa-solid fa-grip-vertical text-xl"></i>
-      </div>
-    );
-
+  const renderSection = (id: string) => {
     if (id === 'professional' && visibility.careerMode) {
       return (
-        <section key={id} {...commonSectionProps}>
-          {dragHandle}
+        <section key={id}>
           <h2 className="text-2xl font-black mb-6 flex items-center">
-            <i className={`fa-solid fa-briefcase mr-3 text-${colors.primary}`}></i> 
+            <i className={`fa-solid fa-briefcase mr-3 ${theme === 'default' ? 'text-indigo-600' : `text-${colors.primary}`}`}></i> 
             Professional Hub
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibility.taMode && (
-              <ActionCard 
-                title={taButtonTitle} 
-                desc={`Context-aware grading and AI logic for ${user?.customTASubject || 'Psychology'}.`} 
-                icon="fa-check-to-slot" 
-                color={primaryCard} 
-                onClick={() => navigate('/grading')} 
-              />
-            )}
-            {hasAccounting && (
-              <ActionCard 
-                title="Accounting HQ" 
-                desc="Analyze transactions and GAAP rules." 
-                icon="fa-calculator" 
-                color={accentCard} 
-                onClick={() => navigate('/accounting')} 
-              />
-            )}
-            {visibility.emailEditor && <ActionCard title="Email Studio" desc="Smart drafting for correspondence." icon="fa-envelope-open-text" color={secondaryCard} onClick={() => navigate('/email-editor')} />}
-            {visibility.docDrafter && <ActionCard title="Doc Drafter" desc="AI structure for documents." icon="fa-file-signature" color={tertiaryCard} onClick={() => navigate('/doc-drafter')} />}
+            {hasAccounting && <ActionCard title="Accounting HQ" desc="Audit transactions and GAAP research." icon="fa-calculator" color={profColor} onClick={() => navigate('/accounting')} />}
+            {hasEngineering && <ActionCard title="Engineering HQ" desc="Math derivations, circuit analysis, and technical logic." icon="fa-microchip" color={profColor} onClick={() => navigate('/engineering')} />}
+            {hasHealth && <ActionCard title="Health HQ" desc="Clinical dictionary and anatomical atlas." icon="fa-dna" color={profColor} onClick={() => navigate('/health')} />}
+            {hasLegal && <ActionCard title="Legal HQ" desc="Case research and statute summaries." icon="fa-scale-balanced" color={profColor} onClick={() => navigate('/legal')} />}
+            {hasCreative && <ActionCard title="Creative HQ" desc="Moodboards and creative brief logic." icon="fa-palette" color={profColor} onClick={() => navigate('/creative')} />}
+            {hasTech && <ActionCard title="Tech HQ" desc="Architecture diagrams and code auditing." icon="fa-code" color={profColor} onClick={() => navigate('/tech')} />}
+            {hasBusiness && <ActionCard title="Business HQ" desc="Market SWOT and competitive analysis." icon="fa-briefcase" color={profColor} onClick={() => navigate('/business')} />}
+            {hasScientific && <ActionCard title="Scientific HQ" desc="Advanced research and data lookup." icon="fa-flask" color={profColor} onClick={() => navigate('/scientific')} />}
+            {hasPsychologyPro && <ActionCard title="Psychology HQ" desc="DSM-5 lookup and clinical methodology." icon="fa-brain" color={profColor} onClick={() => navigate('/psychology-hq')} />}
+            {hasMarketing && <ActionCard title="Marketing HQ" desc="Strategy, personas, and campaign briefs." icon="fa-bullhorn" color={profColor} onClick={() => navigate('/marketing')} />}
+            {visibility.emailEditor && <ActionCard title="Email Studio" desc="Smart professional drafting." icon="fa-envelope-open-text" color={profColor} onClick={() => navigate('/email-editor')} />}
           </div>
         </section>
       );
@@ -187,21 +92,23 @@ const Dashboard: React.FC = () => {
 
     if (id === 'academic' && visibility.studentMode) {
       return (
-        <section key={id} {...commonSectionProps}>
-          {dragHandle}
-          <h2 className="text-2xl font-black mb-6 flex items-center"><i className={`fa-solid fa-graduation-cap mr-3 text-${colors.primary}`}></i> Academic Hub</h2>
+        <section key={id}>
+          <h2 className="text-2xl font-black mb-6 flex items-center">
+            <i className={`fa-solid fa-graduation-cap mr-3 ${theme === 'default' ? 'text-emerald-500' : `text-${colors.primary}`}`}></i> 
+            Academic Hub
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <ActionCard title="Study Lab" desc="Synthesize lecture notes and readings." icon="fa-laptop-code" color={primaryCard} onClick={() => navigate('/study')} />
-            {visibility.visionAide && (
+            {visibility.taMode && (
               <ActionCard 
-                  title="Vision Assistant" 
-                  desc="Visual analysis and OCR helper." 
-                  icon="fa-eye" 
-                  color={secondaryCard} 
-                  onClick={() => navigate('/accessibility')} 
+                title={`${user?.customTASubject || 'Psychology'} TA / RA`} 
+                desc="Context-aware grading, research assistance, and feedback." 
+                icon="fa-graduation-cap" 
+                color={acadColor} 
+                onClick={() => navigate('/grading')} 
               />
             )}
-            <ActionCard title="Knowledge Vault" desc="Central repository for lecture data." icon="fa-vault" color={tertiaryCard} onClick={() => navigate('/vault')} />
+            <ActionCard title="Study Lab" desc="Synthesize lecture notes and readings." icon="fa-laptop-code" color={acadColor} onClick={() => navigate('/study')} />
+            <ActionCard title="Knowledge Vault" desc="Central data repository." icon="fa-vault" color={acadColor} onClick={() => navigate('/vault')} />
           </div>
         </section>
       );
@@ -209,72 +116,49 @@ const Dashboard: React.FC = () => {
 
     if (id === 'personal' && visibility.personal) {
       return (
-        <section key={id} {...commonSectionProps}>
-          {dragHandle}
-          <h2 className="text-2xl font-black mb-6 flex items-center"><i className={`fa-solid fa-heart-pulse mr-3 text-${colors.primary}`}></i> Personal Life</h2>
+        <section key={id}>
+          <h2 className="text-2xl font-black mb-6 flex items-center">
+            <i className={`fa-solid fa-heart mr-3 ${theme === 'default' ? 'text-rose-500' : `text-${colors.primary}`}`}></i> 
+            Personal Universe
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibility.calendar && (
-              <ActionCard 
-                title="Calendar" 
-                desc="View events and sync schedules." 
-                icon="fa-calendar-day" 
-                color={primaryCard} 
-                onClick={() => navigate('/calendar')} 
-              />
-            )}
-            {visibility.budget && (
-              <ActionCard title="Personal Ledger" desc="Budget and spending tracker." icon="fa-wallet" color={secondaryCard} onClick={() => navigate('/budget')} />
-            )}
-            {(visibility.fitness || visibility.nutrition) && (
-              <ActionCard 
-                title="Wellness Suite" 
-                desc="Track workouts and caloric intake." 
-                icon="fa-dumbbell" 
-                color={tertiaryCard} 
-                onClick={() => navigate(visibility.fitness ? '/fitness' : '/nutrition')} 
-              />
-            )}
+            <ActionCard title="Personal Life" desc="Manage health, finance, and schedule." icon="fa-heart" color={persColor} onClick={() => navigate('/personal')} />
+            <ActionCard title="Calendar" desc="Integrated schedule sync." icon="fa-calendar-day" color={persColor} onClick={() => navigate('/calendar')} />
           </div>
         </section>
       );
     }
 
+    if (id === 'accessibility') {
+      const hasAnyAide = visibility.visionAide || visibility.hearingAide || visibility.cognitiveAide;
+      if (!hasAnyAide) return null;
+
+      return (
+        <section key={id}>
+          <h2 className="text-2xl font-black mb-6 flex items-center">
+            <i className={`fa-solid fa-universal-access mr-3 ${theme === 'default' ? 'text-purple-600' : `text-${colors.primary}`}`}></i> 
+            Accessibility Suite
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <ActionCard title="Accessibility Hub" desc="Manage all vision, hearing, and cognitive tools." icon="fa-universal-access" color={aideColor} onClick={() => navigate('/accessibility')} />
+            {visibility.visionAide && <ActionCard title="Vision Assistant" desc="AI-powered OCR and object description." icon="fa-eye" color={aideColor} onClick={() => navigate('/accessibility')} />}
+            {visibility.hearingAide && <ActionCard title="Hearing Aide" desc="Real-time transcription and environmental alerts." icon="fa-ear-listen" color={aideColor} onClick={() => navigate('/accessibility')} />}
+          </div>
+        </section>
+      );
+    }
     return null;
   };
 
   return (
     <div className={`max-w-6xl mx-auto pb-12 text-${colors.text}`}>
-      <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div>
-          <h1 className="text-6xl font-black mb-1 tracking-tighter">My Universe</h1>
-          <p className={`text-${colors.primary} font-bold italic opacity-80 text-lg`}>Nexus: your personal assistant</p>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <div className="hidden lg:flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest opacity-20 mr-4">
-            <i className="fa-solid fa-hand-pointer"></i>
-            <span>Drag sections to reorder</span>
-          </div>
-
-          {user?.isLoggedIn && (
-            <div className="flex items-center space-x-4 bg-white/50 backdrop-blur-sm p-2 rounded-full border border-white shadow-sm">
-               <img src={user.picture} alt="Profile" className="w-12 h-12 rounded-full border-2 border-white shadow-sm" />
-               <div className="flex flex-col pr-4">
-                <span className="font-bold text-[10px] uppercase tracking-widest opacity-40 text-left">Persona Active</span>
-                <span className="font-black text-sm">{user.name}</span>
-              </div>
-            </div>
-          )}
-        </div>
+      <header className="mb-8">
+        <h1 className="text-6xl font-black mb-1 tracking-tighter">My Universe</h1>
+        <p className={`text-${colors.primary} font-bold italic opacity-80 text-lg`}>Nexus: your personal assistant</p>
       </header>
-
-      <UpcomingBanner events={upcomingEvents} color={colors.primary} />
-
       <div className="space-y-16">
-        {sectionOrder.map((sectionId, index) => renderSection(sectionId, index))}
+        {sectionOrder.map(renderSection)}
       </div>
-
-      <footer className="mt-20 pt-10 border-t border-gray-100 text-center opacity-40 text-sm font-bold tracking-widest uppercase">Nexus AI Platform &bull; {themeCtx.theme} Engine</footer>
     </div>
   );
 };

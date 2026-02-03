@@ -17,6 +17,7 @@ const Scheduling: React.FC = () => {
   const handleGoogleLogin = () => {
     setIsSyncing(true);
     setTimeout(() => {
+      // Create a mock user that fully implements the UserProfile and ModuleVisibility interfaces.
       const mockUser: UserProfile = {
         name: "Nexus User",
         email: "user@example.com",
@@ -30,7 +31,6 @@ const Scheduling: React.FC = () => {
         customTASubject: 'Psychology', // Correct persona
         taKnowledgeBase: [],
         linkedApps: { calendar: true, keep: true },
-        // Added missing properties: budget, fitness, nutrition, calendar
         moduleVisibility: {
           accounting: true,
           psychology: true,
@@ -48,6 +48,16 @@ const Scheduling: React.FC = () => {
           visionAide: true, // Correct persona
           hearingAide: false,
           cognitiveAide: false,
+          // Fixed missing engineeringHQ property to satisfy the ModuleVisibility interface
+          healthHQ: false,
+          legalHQ: false,
+          creativeHQ: false,
+          techHQ: false,
+          engineeringHQ: true,
+          businessHQ: false,
+          scientificHQ: false,
+          psychologyHQ: false,
+          marketingHQ: false,
           dyslexiaMode: false,
           colorFilters: false,
           screenReaderOpt: false
