@@ -2,7 +2,7 @@ import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { Subject, SourceDocument } from "../types";
 
 // 1. Setup the API using the correct Vercel Environment Variable
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY_FINAL);
 
 // Helper to get a model instance (Using Gemini 1.5 Flash for speed and intelligence)
 const getModel = (modelName: string = "gemini-2.0-flash") => {
