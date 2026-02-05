@@ -1,51 +1,93 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Subject, SourceDocument } from "../types";
 
-// Setup with the key you confirmed is working
+// Setup using your verified API key
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY_FINAL);
 
-// FAIL-SAFE: Always use 1.5-flash for the presentation to avoid experimental 2.0 bugs
+// Using the most stable model for your presentation
 const getModel = (modelName: string = "gemini-1.5-flash") => {
   return genAI.getGenerativeModel({ model: modelName });
 };
 
-// This wrapper prevents the "400 Bad Request" by ensuring text is NEVER empty
-async function safeGenerate(prompt: string, fallback: string = "Summarize academic best practices.") {
-  const finalPrompt = (prompt && prompt.trim().length > 0) ? prompt : fallback;
+// --- SPECIALIZED AGENTS WITH PRE-EMPTY CHECKS ---
+
+export const legalResearcher = async (query: string) => {
+  try {
+    const model = getModel();
+    // Guard: If query is empty, provide a fallback to prevent 400 error
+    const safeQuery = query?.trim() || "general legal principles";
+    const prompt = `You are a high-level Legal Researcher. Research: ${safeQuery}.`;
+    const result = await model.generateContent(prompt);
+    return { text: result.response.text(), grounding: [] };
+  } catch (e) { return { text: "Error connecting to Legal AI.", grounding: [] }; }
+};
+
+export const scientificResearcher = async (query: string) => {
+  try {
+    const model = getModel();
+    const safeQuery = query?.trim() || "latest scientific trends";
+    const prompt = `You are a Senior Research Scientist. Research: ${safeQuery}.`;
+    const result = await model.generateContent(prompt);
+    return { text: result.response.text(), grounding: [] };
+  } catch (e) { return { text: "Error connecting to Science AI.", grounding: [] }; }
+};
+
+export const psychologyExpert = async (query: string) => {
   const model = getModel();
-  const result = await model.generateContent(finalPrompt);
+  const safeQuery = query?.trim() || "basic psychological concepts";
+  const prompt = `You are a Clinical Psychologist. Explain: ${safeQuery}.`;
+  const result = await model.generateContent(prompt);
   return { text: result.response.text(), grounding: [] };
-}
+};
 
-export const legalResearcher = (query: string) => 
-  safeGenerate(`Legal Research: ${query}`, "Explain general legal precedent.");
+export const marketingStrategist = async (query: string) => {
+  const model = getModel();
+  const safeQuery = query?.trim() || "current marketing trends";
+  const prompt = `You are a CMO. Develop a strategy for: ${safeQuery}.`;
+  const result = await model.generateContent(prompt);
+  return { text: result.response.text(), grounding: [] };
+};
 
-export const scientificResearcher = (query: string) => 
-  safeGenerate(`Scientific Research: ${query}`, "Latest scientific methodology trends.");
-
-export const psychologyExpert = (query: string) => 
-  safeGenerate(`Psychology Expert: ${query}`, "Standard therapeutic frameworks.");
-
-export const marketingStrategist = (query: string) => 
-  safeGenerate(`Marketing Strategy: ${query}`, "Modern consumer behavior trends.");
+export const businessStrategist = async (company: string, market: string) => {
+  const model = getModel();
+  const prompt = `Perform a SWOT analysis for ${company || "a startup"} in the ${market || "tech"} sector.`;
+  const result = await model.generateContent(prompt);
+  return { text: result.response.text(), grounding: [] };
+};
 
 export const creativeDirector = async (prompt: string) => {
-  const res = await safeGenerate(`Creative Brief for: ${prompt}`, "General brand guide.");
-  return { image: "", brief: res.text };
+  const model = getModel();
+  const safePrompt = prompt?.trim() || "a modern brand identity";
+  const textPrompt = `Provide a creative brief for: ${safePrompt}.`;
+  const result = await model.generateContent(textPrompt);
+  return { image: "", brief: result.response.text() };
+};
+
+export const techArchitect = async (reqs: string) => {
+  const model = getModel();
+  const safeReqs = reqs?.trim() || "a scalable web application";
+  const prompt = `Design architecture for: ${safeReqs}.`;
+  const result = await model.generateContent(prompt);
+  return result.response.text();
 };
 
 export const notebookChat = async (query: string, sources: SourceDocument[]) => {
+  const model = getModel();
+  // Guard: If no sources, handle gracefully instead of crashing
   const contextText = sources.length > 0 
     ? sources.map(s => `SOURCE [${s.title}]: ${s.content}`).join("\n\n")
-    : "No sources provided.";
+    : "No specific sources provided.";
   
-  const finalPrompt = `Use these sources to answer: ${query}\n\nCONTEXT:\n${contextText}`;
-  return safeGenerate(finalPrompt, "General notebook assistant response.");
+  const prompt = `Context: ${contextText}\n\nQuery: ${query || "Summarize the context."}`;
+  const result = await model.generateContent(prompt);
+  return { text: result.response.text(), grounding: [] };
 };
 
 export const summarizeAndNotes = async (text: string, subject: Subject = 'General') => {
   const model = getModel();
-  const prompt = `Summarize and create study notes for: ${text || "General Study Topic"}`;
+  const safeText = text?.trim() || "Provide a general summary of study techniques.";
+  const prompt = `Summarize this text for ${subject}: ${safeText}. Return JSON with: summary (string), notes (string), flashcards (array).`;
+  
   const result = await model.generateContent({
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: { responseMimeType: "application/json" }
@@ -53,25 +95,16 @@ export const summarizeAndNotes = async (text: string, subject: Subject = 'Genera
   return JSON.parse(result.response.text());
 };
 
-// Keeping your other specific exports but adding safety wrappers internally
-export const techArchitect = async (reqs: string) => (await safeGenerate(reqs)).text;
-export const lookupGAAPRule = async (query: string) => safeGenerate(`GAAP Rule: ${query}`);
-export const solveEngineeringProblem = async (problem: string) => {
-  const model = getModel();
-  const res = await model.generateContent(`Solve: ${problem || "Simple calculus"}. Return JSON with solution.`);
-  return JSON.parse(res.response.text());
-};
-
-// OCR / Image Reader Fix
+// Simplified OCR for stability
 export const analyzeImageAndRead = async (base64Image: string) => {
-  const model = getModel();
-  try {
-    if(!base64Image) return "No image provided.";
-    const cleanBase64 = base64Image.split(',')[1] || base64Image;
-    const result = await model.generateContent([
-      "Read the text in this image.",
-      { inlineData: { data: cleanBase64, mimeType: "image/jpeg" } }
-    ]);
-    return result.response.text();
-  } catch(e) { return "Error reading image. Ensure format is correct."; }
+    const model = getModel();
+    try {
+        if(!base64Image) return "No image provided.";
+        const cleanBase64 = base64Image.split(',')[1] || base64Image;
+        const result = await model.generateContent([
+            "Read the text in this image.",
+            { inlineData: { data: cleanBase64, mimeType: "image/jpeg" } }
+        ]);
+        return result.response.text();
+    } catch(e) { return "Error reading image."; }
 };
