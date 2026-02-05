@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 // Helper to get a model instance (Using Gemini 1.5 Flash for speed and intelligence)
 const getModel = (modelName: string = "gemini-1.5-flash") => {
-  return genAI.getGenerativeModel({ model: modelName });
+  return genAI.getGenerativeModel({ model: modelName }, { apiVersion: 'v1' });
 };
 
 // --- SPECIALIZED AGENTS ---
