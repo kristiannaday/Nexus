@@ -8,10 +8,10 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey || "");
 
-// Changed to v1beta to fix the 404 "model not found" error
+// Updated to the current stable model and API version
 const model = genAI.getGenerativeModel(
-  { model: "gemini-1.5-flash" },
-  { apiVersion: "v1beta" }
+  { model: "gemini-2.5-flash" },
+  { apiVersion: "v1" }
 );
 
 export const summarizeAndNotes = async (text: any) => {
